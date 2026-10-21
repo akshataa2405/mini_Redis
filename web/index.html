@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniRedis | High-Performance In-Memory Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation Bar -->
+        <header class="navbar">
+            <div class="brand">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>MiniRedis</h1>
+                    <span class="badge-engine">C++17 Engine</span>
+                </div>
+            </div>
+
+            <div class="server-telemetry">
+                <div class="status-indicator online" id="statusIndicator">
+                    <span class="pulse-dot"></span>
+                    <span id="statusText">ONLINE (127.0.0.1:6380)</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="stat-label">Total Keys</span>
+                    <span class="stat-val" id="statKeyCount">0</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="stat-label">Multiplexer</span>
+                    <span class="stat-val">poll()</span>
+                </div>
+            </div>
+
+            <div class="actions-bar">
+                <button class="btn btn-secondary" id="btnSampleData" title="Insert demo data">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    Sample Data
+                </button>
+                <button class="btn btn-primary" id="btnNewKeyModal">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+                    Add Key
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Split Workspace -->
+        <main class="workspace">
+            <!-- Left Panel: Interactive Terminal -->
+            <section class="panel terminal-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="4 17 10 11 4 5"></polyline>
+                            <line x1="12" y1="19" x2="20" y2="19"></line>
+                        </svg>
+                        <span>Interactive Console</span>
+                    </div>
+                    <div class="terminal-actions">
+                        <button class="btn-icon" id="btnClearTerminal" title="Clear console">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Command Suggestions Bar -->
+                <div class="command-chips">
+                    <span class="chip" data-cmd="PING">PING</span>
+                    <span class="chip" data-cmd='SET message "Hello MiniRedis!"'>SET greeting</span>
+                    <span class="chip" data-cmd='SET session "active" EX 10'>SET with TTL</span>
+                    <span class="chip" data-cmd="INCR pageviews">INCR counter</span>
+                    <span class="chip" data-cmd="LPUSH tasks &quot;clean code&quot; &quot;verify tests&quot;">LPUSH list</span>
+                    <span class="chip" data-cmd="LRANGE tasks 0 -1">LRANGE list</span>
+                    <span class="chip" data-cmd="KEYS *">KEYS *</span>
+                    <span class="chip" data-cmd="INFO">INFO</span>
+                </div>
+
+                <div class="terminal-body" id="terminalOutput">
+                    <div class="terminal-welcome">
+                        <pre>
+  __  __ _       _ _____          _ _     
+ |  \/  (_)     (_)  __ \        | (_)    
+ | \  / |_ _ __  _| |__) |___  __| |_ ___ 
+ | |\/| | | '_ \| |  _  // _ \/ _` | / __|
+ | |  | | | | | | | | \ \  __/ (_| | \__ \
+ |_|  |_|_|_| |_|_|_|  \_\___|\__,_|_|___/
+                        </pre>
+                        <p class="welcome-sub">MiniRedis v1.0.0 (C++17 Engine over POSIX poll)</p>
+                        <p class="welcome-tip">Type any Redis command below or click a quick suggestion above.</p>
+                    </div>
+                </div>
+
+                <div class="terminal-input-bar">
+                    <span class="prompt">127.0.0.1:6380&gt;</span>
+                    <input type="text" id="terminalInput" placeholder="e.g. SET user:1 'Ada Lovelace' EX 60" autocomplete="off" spellcheck="false" autofocus>
+                    <button class="btn-send" id="btnSendCmd">Execute</button>
+                </div>
+            </section>
+
+            <!-- Right Panel: Keyspace & Data Structures Visualizer -->
+            <section class="panel visualizer-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                        </svg>
+                        <span>Live Keyspace Explorer</span>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" id="filterPattern" placeholder="Filter pattern (*, user:*)" value="*">
+                        <button class="btn-icon" id="btnRefreshKeys" title="Refresh">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="keys-grid" id="keysContainer">
+                    <div class="empty-state" id="emptyState">
+                        <p>No keys in store</p>
+                        <span class="sub">Click "Sample Data" or use the terminal to create keys.</span>
+                    </div>
+                </div>
+
+                <!-- Footer architecture badge -->
+                <div class="architecture-banner">
+                    <div class="arch-col">
+                        <span class="arch-label">HASH TABLE</span>
+                        <span class="arch-val">Separate Chaining + FNV-1a</span>
+                    </div>
+                    <div class="arch-col">
+                        <span class="arch-label">REHASHING</span>
+                        <span class="arch-val">Progressive 8 Buckets/Op</span>
+                    </div>
+                    <div class="arch-col">
+                        <span class="arch-label">TTL ENGINE</span>
+                        <span class="arch-val">Binary Min-Heap + Lazy Expiry</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Add Key Modal -->
+    <div class="modal-backdrop" id="newKeyModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Insert New Key</h3>
+                <button class="modal-close" id="btnCloseModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="inputKeyName">Key Name</label>
+                    <input type="text" id="inputKeyName" placeholder="e.g. session:token">
+                </div>
+                <div class="form-group">
+                    <label for="inputKeyValue">Value</label>
+                    <input type="text" id="inputKeyValue" placeholder="e.g. xyz123">
+                </div>
+                <div class="form-group">
+                    <label for="inputKeyTTL">Expiration in seconds (optional)</label>
+                    <input type="number" id="inputKeyTTL" placeholder="e.g. 30" min="1">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btnCancelModal">Cancel</button>
+                <button class="btn btn-primary" id="btnSubmitKey">Save Key</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
